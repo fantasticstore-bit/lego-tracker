@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import streamlit as st
@@ -16,6 +17,26 @@ DEMO_PORTFOLIO = [
     {"code": "75192", "name": "Millennium Falcon", "qty": 1, "paid": 849.99, "value": 849.99, "theme": "Star Wars", "year": 2017},
     {"code": "10294", "name": "Titanic", "qty": 1, "paid": 679.99, "value": 679.99, "theme": "Icons", "year": 2021},
 ]
+
+
+def get_secret(name, env_name=None):
+    env_name = env_name or name.upper()
+    try:
+        value = st.secrets.get(name, "")
+    except Exception:
+        value = ""
+    return str(value or os.environ.get(env_name, "")).strip()
+
+
+REBRICKABLE_API_KEY = get_secret("rebrickable_api_key", "REBRICKABLE_API_KEY")
+BRICKLINK_READY = all(
+    [
+        get_secret("bricklink_consumer_key", "BRICKLINK_CONSUMER_KEY"),
+        get_secret("bricklink_consumer_secret", "BRICKLINK_CONSUMER_SECRET"),
+        get_secret("bricklink_token", "BRICKLINK_TOKEN"),
+        get_secret("bricklink_token_secret", "BRICKLINK_TOKEN_SECRET"),
+    ]
+)
 
 
 def load_local_portfolio():
@@ -86,6 +107,17 @@ st.markdown(
 
 st.title("LEGO Tracker")
 st.caption("Portfolio-first LEGO collection analytics")
+
+api_cols = st.columns(2)
+if REBRICKABLE_API_KEY:
+    api_cols[0].success("Rebrickable API collegata")
+else:
+    api_cols[0].warning("Rebrickable API non configurata")
+
+if BRICKLINK_READY:
+    api_cols[1].success("BrickLink API collegata")
+else:
+    api_cols[1].warning("BrickLink API non configurata")
 
 metric_cols = st.columns(4)
 metric_cols[0].metric("Set posseduti", f"{owned_qty}")

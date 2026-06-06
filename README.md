@@ -40,6 +40,16 @@ Create `.brickpulse.local.json` locally:
 
 Do not commit `.brickpulse.local.json` or `.brickpulse.users.json`.
 
+For hosted deployments that support environment variables, use:
+
+```text
+REBRICKABLE_API_KEY
+BRICKLINK_CONSUMER_KEY
+BRICKLINK_CONSUMER_SECRET
+BRICKLINK_TOKEN
+BRICKLINK_TOKEN_SECRET
+```
+
 ## Streamlit
 
 The Streamlit entrypoint is:
@@ -56,3 +66,14 @@ streamlit_app.py
 
 Use `.streamlit/secrets.toml.example` as the template for secrets.
 
+In Streamlit Cloud, open the app settings, go to **Secrets**, and paste:
+
+```toml
+rebrickable_api_key = "YOUR_REBRICKABLE_KEY"
+bricklink_consumer_key = ""
+bricklink_consumer_secret = ""
+bricklink_token = ""
+bricklink_token_secret = ""
+```
+
+The app will show whether Rebrickable and BrickLink are connected.

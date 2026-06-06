@@ -34,7 +34,15 @@ def write_json_file(path, payload):
 
 
 def read_config():
-    return read_json_file(SECRET_PATH, {})
+    file_config = read_json_file(SECRET_PATH, {})
+    env_config = {
+        "rebrickable_api_key": os.environ.get("REBRICKABLE_API_KEY", "").strip(),
+        "bricklink_consumer_key": os.environ.get("BRICKLINK_CONSUMER_KEY", "").strip(),
+        "bricklink_consumer_secret": os.environ.get("BRICKLINK_CONSUMER_SECRET", "").strip(),
+        "bricklink_token": os.environ.get("BRICKLINK_TOKEN", "").strip(),
+        "bricklink_token_secret": os.environ.get("BRICKLINK_TOKEN_SECRET", "").strip(),
+    }
+    return {**file_config, **{key: value for key, value in env_config.items() if value}}
 
 
 def read_saved_key():
