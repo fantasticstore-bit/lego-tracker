@@ -1,0 +1,14 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local secrets and private user data
+.brickpulse.local.json
+.brickpulse.users.json
+.streamlit/secrets.toml
+
+# Local runtime files
+*.log
+*.cookie
+
