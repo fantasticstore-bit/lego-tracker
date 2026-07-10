@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LEGO Tracker</title>
-    <link rel="stylesheet" href="styles.css?v=owned-import1" />
+    <link rel="stylesheet" href="styles.css?v=bricklink-seller-note-1" />
   </head>
   <body>
     <section class="landing-page" id="landingPage">
@@ -138,6 +138,10 @@
             <span class="icon">◇</span>
             Segnali
           </button>
+          <button class="nav-item" type="button" data-view="quant">
+            <span class="icon">AI</span>
+            Quant AI
+          </button>
           <button class="nav-item" type="button" data-view="watchlist">
             <span class="icon">◎</span>
             Watchlist
@@ -233,12 +237,31 @@
           <div class="catalog-actions">
             <input id="apiKeyInput" class="api-key-input" type="password" placeholder="Chiave API Rebrickable" autocomplete="off" />
             <button class="primary-action" type="button" id="syncApi">Sincronizza API</button>
+            <button class="ghost-action" type="button" id="syncMarketPrices">Aggiorna prezzi</button>
             <label class="file-drop">
               <input id="catalogFile" type="file" accept=".csv,text/csv" />
               <span>Carica sets.csv</span>
             </label>
             <button class="ghost-action" type="button" id="clearCatalog">Rimuovi catalogo</button>
           </div>
+        </div>
+
+        <div class="catalog-panel bricklink-panel" hidden>
+          <div>
+            <p class="eyebrow">Prezzi reali</p>
+            <h2>Collega BrickLink Price Guide</h2>
+            <p id="bricklinkStatus">BrickLink puo richiedere un account seller/API abilitata. Se non puoi creare le chiavi, usa Data Sources con CSV prezzi o sold comps: il motore Quant li legge comunque.</p>
+          </div>
+          <div class="bricklink-grid">
+            <input id="bricklinkConsumerKey" class="api-key-input" type="password" placeholder="Consumer key" autocomplete="off" />
+            <input id="bricklinkConsumerSecret" class="api-key-input" type="password" placeholder="Consumer secret" autocomplete="off" />
+            <input id="bricklinkToken" class="api-key-input" type="password" placeholder="Token" autocomplete="off" />
+            <input id="bricklinkTokenSecret" class="api-key-input" type="password" placeholder="Token secret" autocomplete="off" />
+            <button class="primary-action" type="button" id="saveBricklinkConfig">Salva BrickLink</button>
+            <button class="ghost-action" type="button" id="testBricklinkConfig">Test connessione</button>
+            <button class="ghost-action" type="button" id="runApiDoctor">API Doctor</button>
+          </div>
+          <div class="api-doctor" id="apiDoctor"></div>
         </div>
 
         <div class="content-band">
@@ -249,7 +272,7 @@
               <span class="result-note" id="resultNote">6 risultati</span>
             </div>
             <div class="segmented" role="tablist" aria-label="Filtro performance">
-              <button class="segment active" type="button" data-filter="all">Caldi 2026</button>
+              <button class="segment active" type="button" data-filter="all">Tutti i set</button>
               <button class="segment" type="button" data-filter="up">Momentum</button>
               <button class="segment" type="button" data-filter="retiring">Ritiro 2026</button>
             </div>
@@ -359,9 +382,12 @@
           <div class="portfolio-grid">
             <article class="portfolio-summary">
               <p class="eyebrow">La tua collezione</p>
-              <h2 id="portfolioHeadline">€0</h2>
-              <span>Valore stimato oggi</span>
-              <div class="allocation-chart" id="allocationChart" aria-label="Distribuzione portfolio"></div>
+              <div class="portfolio-hero-value">
+                <h2 id="portfolioHeadline">€0</h2>
+                <span class="portfolio-return-badge" id="portfolioReturnBadge">0%</span>
+              </div>
+              <span>Valore stimato oggi vs retail storico</span>
+              <div class="allocation-chart" id="allocationChart" aria-label="Composizione valore portfolio"></div>
             </article>
             <div class="portfolio-stats">
               <article class="metric-card compact">
@@ -423,6 +449,14 @@
                 </div>
                 <div id="yearSummary"></div>
               </div>
+              <div class="summary-section">
+                <div class="summary-title">
+                  <strong>Condizione</strong>
+                  <span>Set</span>
+                  <span>Valore</span>
+                </div>
+                <div id="conditionSummary"></div>
+              </div>
             </article>
           </div>
 
@@ -431,8 +465,12 @@
               <p class="eyebrow">Holdings</p>
               <h2>Posizioni aperte</h2>
             </div>
-            <button class="ghost-action" type="button" id="resetData">Reset demo</button>
+            <div class="section-actions">
+              <button class="ghost-action" type="button" id="importPortfolioCsv">Importa CSV portfolio</button>
+              <button class="ghost-action" type="button" id="resetData">Reset demo</button>
+            </div>
           </div>
+          <input id="portfolioCsvFile" type="file" accept=".csv,text/csv" hidden />
           <form class="action-form" id="portfolioForm">
             <label class="set-search-field">
               Set
@@ -459,7 +497,9 @@
             <label>
               Condizione
               <select id="portfolioCondition">
-                <option>Sigillato</option>
+                <option>Sigillato nuovo</option>
+                <option>Aperto completo perfetto</option>
+                <option>Montato completo perfetto</option>
                 <option>Usato completo</option>
                 <option>Senza scatola</option>
               </select>
@@ -477,6 +517,105 @@
               <h2>Non solo prezzo: conta il contesto.</h2>
             </div>
             <p id="engineNarrative">Ogni segnale combina ritiro, liquidità, tema, premio sigillato, stagionalità e distanza dal fair value. È qui che BrickPulse può diventare più utile di un semplice storico prezzi.</p>
+          </div>
+        </section>
+
+        <section class="view-panel" data-panel="quant">
+          <div class="quant-disclaimer">
+            <strong>LEGO Quant AI usa dati mock realistici.</strong>
+            <span>Non e una raccomandazione finanziaria. Il modello e pronto per dati reali da Rebrickable, BrickEconomy, BrickLink, eBay e import CSV.</span>
+          </div>
+
+          <div class="quant-tabs" role="tablist" aria-label="LEGO Quant AI">
+            <button class="quant-tab active" type="button" data-quant-tab="command">Command Center</button>
+            <button class="quant-tab" type="button" data-quant-tab="pro">Pro Mode</button>
+            <button class="quant-tab" type="button" data-quant-tab="overview">Quant Overview</button>
+            <button class="quant-tab" type="button" data-quant-tab="portfolio">Portfolio AI</button>
+            <button class="quant-tab" type="button" data-quant-tab="sources">Data Sources</button>
+            <button class="quant-tab" type="button" data-quant-tab="history">Price History</button>
+            <button class="quant-tab" type="button" data-quant-tab="quality">Quality Gate</button>
+            <button class="quant-tab" type="button" data-quant-tab="vault">Data Vault</button>
+            <button class="quant-tab" type="button" data-quant-tab="strategy">Strategy Lab</button>
+            <button class="quant-tab" type="button" data-quant-tab="model">Model Lab</button>
+            <button class="quant-tab" type="button" data-quant-tab="deals">Deal Scanner</button>
+            <button class="quant-tab" type="button" data-quant-tab="alerts">Alert Center</button>
+            <button class="quant-tab" type="button" data-quant-tab="opportunities">Top Opportunities</button>
+            <button class="quant-tab" type="button" data-quant-tab="detail">Set Detail Forecast</button>
+            <button class="quant-tab" type="button" data-quant-tab="themes">Theme Analysis</button>
+            <button class="quant-tab" type="button" data-quant-tab="retirement">Retirement Radar</button>
+            <button class="quant-tab" type="button" data-quant-tab="backtest">Backtest Report</button>
+          </div>
+
+          <div class="quant-panel active" data-quant-panel="command">
+            <div class="quant-command-center" id="quantCommandCenter"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="pro">
+            <div class="quant-pro-mode" id="quantProMode"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="overview">
+            <div class="quant-metrics" id="quantOverview"></div>
+            <div class="quant-grid" id="quantOverviewGrid"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="portfolio">
+            <div class="quant-portfolio-ai" id="quantPortfolioAi"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="sources">
+            <div class="quant-sources" id="quantDataSources"></div>
+            <input id="marketSnapshotFile" type="file" accept=".csv,text/csv" hidden />
+            <input id="soldCompsFile" type="file" accept=".csv,text/csv" hidden />
+          </div>
+
+          <div class="quant-panel" data-quant-panel="history">
+            <div class="quant-price-history" id="quantPriceHistory"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="quality">
+            <div class="quant-quality-gate" id="quantQualityGate"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="vault">
+            <div class="quant-data-vault" id="quantDataVault"></div>
+            <input id="backupImportFile" type="file" accept=".json,application/json" hidden />
+          </div>
+
+          <div class="quant-panel" data-quant-panel="strategy">
+            <div class="quant-strategy-lab" id="quantStrategyLab"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="model">
+            <div class="quant-model-lab" id="quantModelLab"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="deals">
+            <div class="quant-deal-scanner" id="quantDealScanner"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="alerts">
+            <div class="quant-alert-center" id="quantAlertCenter"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="opportunities">
+            <div class="quant-opportunities" id="quantOpportunities"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="detail">
+            <div class="quant-detail" id="quantSetDetail"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="themes">
+            <div class="quant-table" id="quantThemeAnalysis"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="retirement">
+            <div class="quant-opportunities" id="quantRetirementRadar"></div>
+          </div>
+
+          <div class="quant-panel" data-quant-panel="backtest">
+            <div class="quant-backtest" id="quantBacktest"></div>
           </div>
         </section>
 
@@ -510,6 +649,7 @@
       </main>
     </div>
 
-    <script src="app.js?v=owned-import1"></script>
+    <script src="quant-engine.js?v=bricklink-auto-1"></script>
+    <script src="app.js?v=bricklink-seller-note-1"></script>
   </body>
 </html>

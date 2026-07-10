@@ -16,6 +16,7 @@ import urllib.request
 
 SECRET_PATH = Path(".brickpulse.local.json")
 USERS_PATH = Path(".brickpulse.users.json")
+SESSION_COOKIE_NAME = "brickpulse_session"
 
 
 def read_json_file(path, fallback):
@@ -43,6 +44,12 @@ def read_config():
         "bricklink_token_secret": os.environ.get("BRICKLINK_TOKEN_SECRET", "").strip(),
     }
     return {**file_config, **{key: value for key, value in env_config.items() if value}}
+
+
+def write_config_patch(patch):
+    current = read_json_file(SECRET_PATH, {})
+    current.update({key: value for key, value in patch.items() if value})
+    write_json_file(SECRET_PATH, current)
 
 
 def read_saved_key():
@@ -85,6 +92,11 @@ def verify_password(password, salt, expected_hash):
     return hmac.compare_digest(candidate, expected_hash)
 
 
+def build_session_cookie(value, max_age):
+    secure = "; Secure" if os.environ.get("BRICKPULSE_SECURE_COOKIES", "").strip() in {"1", "true", "yes"} else ""
+    return f"{SESSION_COOKIE_NAME}={value}; HttpOnly; SameSite=Lax; Path=/; Max-Age={max_age}{secure}"
+
+
 class BrickPulseHandler(SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         safe_args = tuple("[hidden]" if "key" in str(arg).lower() else arg for arg in args)
@@ -113,6 +125,10 @@ class BrickPulseHandler(SimpleHTTPRequestHandler):
             )
             return
 
+        if parsed.path == "/api/diagnostics":
+            self.handle_diagnostics()
+            return
+
         if parsed.path == "/api/auth/me":
             user_email = self.get_session_user()
             if not user_email:
@@ -131,6 +147,36 @@ class BrickPulseHandler(SimpleHTTPRequestHandler):
             self.send_json(state, 200)
             return
 
+        if parsed.path == "/api/user/market-data":
+            user_email = self.get_session_user()
+            if not user_email:
+                self.send_json({"detail": "Not authenticated"}, 401)
+                return
+            users_db = read_users_db()
+            market_data = users_db["users"].get(user_email, {}).get("market_data", {})
+            self.send_json(market_data, 200)
+            return
+
+        if parsed.path == "/api/user/export":
+            user_email = self.get_session_user()
+            if not user_email:
+                self.send_json({"detail": "Not authenticated"}, 401)
+                return
+            users_db = read_users_db()
+            user = users_db["users"].get(user_email, {})
+            self.send_json(
+                {
+                    "app": "LEGO Tracker",
+                    "exported_at": int(time.time()),
+                    "email": user_email,
+                    "state": user.get("state", {}),
+                    "market_data": user.get("market_data", {}),
+                    "note": "Server export senza password o API key.",
+                },
+                200,
+            )
+            return
+
         super().do_GET()
 
     def do_POST(self):
@@ -146,6 +192,22 @@ class BrickPulseHandler(SimpleHTTPRequestHandler):
 
         if parsed.path == "/api/user/state":
             self.handle_save_user_state()
+            return
+
+        if parsed.path == "/api/user/market-data":
+            self.handle_save_user_market_data()
+            return
+
+        if parsed.path == "/api/config/rebrickable":
+            self.handle_save_rebrickable_config()
+            return
+
+        if parsed.path == "/api/config/bricklink":
+            self.handle_save_bricklink_config()
+            return
+
+        if parsed.path == "/api/config/bricklink/test":
+            self.handle_test_bricklink_config()
             return
 
         self.send_json({"detail": "Endpoint not allowed"}, 404)
@@ -216,7 +278,7 @@ class BrickPulseHandler(SimpleHTTPRequestHandler):
         users_db["sessions"][token] = {"email": email, "expires": time.time() + 60 * 60 * 24 * 30}
         write_users_db(users_db)
 
-        self.send_json({"email": email, "state": user.get("state", {})}, 200, cookie=f"brickpulse_session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000")
+        self.send_json({"email": email, "state": user.get("state", {})}, 200, cookie=build_session_cookie(token, 60 * 60 * 24 * 30))
 
     def handle_logout(self):
         token = self.get_cookie_value("brickpulse_session")
@@ -224,7 +286,7 @@ class BrickPulseHandler(SimpleHTTPRequestHandler):
         if token:
             users_db["sessions"].pop(token, None)
             write_users_db(users_db)
-        self.send_json({"ok": True}, 200, cookie="brickpulse_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0")
+        self.send_json({"ok": True}, 200, cookie=build_session_cookie("", 0))
 
     def handle_save_user_state(self):
         user_email = self.get_session_user()
@@ -245,6 +307,88 @@ class BrickPulseHandler(SimpleHTTPRequestHandler):
         users_db["users"][user_email]["state"] = state
         write_users_db(users_db)
         self.send_json({"ok": True}, 200)
+
+    def handle_save_user_market_data(self):
+        user_email = self.get_session_user()
+        if not user_email:
+            self.send_json({"detail": "Not authenticated"}, 401)
+            return
+
+        body = self.read_json_body()
+        market_data = {
+            "marketSnapshots": body.get("marketSnapshots") if isinstance(body.get("marketSnapshots"), dict) else {},
+            "priceHistory": body.get("priceHistory") if isinstance(body.get("priceHistory"), dict) else {},
+            "quantModelWeights": body.get("quantModelWeights") if isinstance(body.get("quantModelWeights"), dict) else {},
+            "updated_at": int(time.time()),
+        }
+        users_db = read_users_db()
+        if user_email not in users_db["users"]:
+            self.send_json({"detail": "User not found"}, 404)
+            return
+        users_db["users"][user_email]["market_data"] = market_data
+        write_users_db(users_db)
+        self.send_json({"ok": True, "updated_at": market_data["updated_at"]}, 200)
+
+    def handle_save_rebrickable_config(self):
+        body = self.read_json_body()
+        api_key = str(body.get("apiKey", "")).strip()
+        if not api_key:
+            self.send_json({"detail": "Missing Rebrickable API key"}, 400)
+            return
+        write_config_patch({"rebrickable_api_key": api_key})
+        self.send_json({"ok": True, "hasRebrickableKey": True}, 200)
+
+    def handle_save_bricklink_config(self):
+        body = self.read_json_body()
+        patch = {
+            "bricklink_consumer_key": str(body.get("consumerKey", "")).strip(),
+            "bricklink_consumer_secret": str(body.get("consumerSecret", "")).strip(),
+            "bricklink_token": str(body.get("token", "")).strip(),
+            "bricklink_token_secret": str(body.get("tokenSecret", "")).strip(),
+        }
+        if not all(patch.values()):
+            self.send_json({"detail": "Completa tutte le credenziali BrickLink"}, 400)
+            return
+        write_config_patch(patch)
+        self.send_json({"ok": True, "hasBrickLinkKey": True}, 200)
+
+    def handle_test_bricklink_config(self):
+        config = read_bricklink_config()
+        if not all(config.values()):
+            self.send_json({"detail": "Missing BrickLink credentials"}, 401)
+            return
+        query = urllib.parse.urlencode({"set_num": "75313-1", "guide_type": "sold", "new_or_used": "N"})
+        self.proxy_bricklink_price(query)
+
+    def handle_diagnostics(self):
+        config = read_config()
+        bricklink = read_bricklink_config()
+        users_db = read_users_db()
+        market_accounts = sum(1 for user in users_db.get("users", {}).values() if user.get("market_data"))
+        try:
+            write_config_patch({})
+            secret_writable = True
+        except Exception:
+            secret_writable = False
+        self.send_json(
+            {
+                "server": "ok",
+                "secretFileExists": SECRET_PATH.exists(),
+                "secretFileWritable": secret_writable,
+                "hasRebrickableKey": bool(config.get("rebrickable_api_key")),
+                "hasBrickLinkKey": all(bricklink.values()),
+                "brickLinkFields": {
+                    "consumerKey": bool(bricklink["consumer_key"]),
+                    "consumerSecret": bool(bricklink["consumer_secret"]),
+                    "token": bool(bricklink["token"]),
+                    "tokenSecret": bool(bricklink["token_secret"]),
+                },
+                "userCount": len(users_db.get("users", {})),
+                "sessionCount": len(users_db.get("sessions", {})),
+                "marketDataAccounts": market_accounts,
+            },
+            200,
+        )
 
     def proxy_rebrickable(self, endpoint, query):
         allowed = {"sets", "themes"}
@@ -365,9 +509,11 @@ class BrickPulseHandler(SimpleHTTPRequestHandler):
 
 
 def main():
-    port = int(os.environ.get("BRICKPULSE_PORT", "4177"))
-    server = ThreadingHTTPServer(("127.0.0.1", port), BrickPulseHandler)
-    print(f"BrickPulse disponibile su http://localhost:{port}")
+    port = int(os.environ.get("PORT") or os.environ.get("BRICKPULSE_PORT", "4177"))
+    host = os.environ.get("BRICKPULSE_HOST", "127.0.0.1").strip() or "127.0.0.1"
+    server = ThreadingHTTPServer((host, port), BrickPulseHandler)
+    label_host = "localhost" if host in {"0.0.0.0", "127.0.0.1"} else host
+    print(f"BrickPulse disponibile su http://{label_host}:{port}")
     server.serve_forever()
 
 

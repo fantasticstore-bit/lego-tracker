@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: lego-tracker
+    env: python
+    plan: starter
+    buildCommand: ""
+    startCommand: BRICKPULSE_HOST=0.0.0.0 BRICKPULSE_SECURE_COOKIES=1 python3 server.py
+    envVars:
+      - key: REBRICKABLE_API_KEY
+        sync: false
+      - key: BRICKLINK_CONSUMER_KEY
+        sync: false
+      - key: BRICKLINK_CONSUMER_SECRET
+        sync: false
+      - key: BRICKLINK_TOKEN
+        sync: false
+      - key: BRICKLINK_TOKEN_SECRET
+        sync: false
