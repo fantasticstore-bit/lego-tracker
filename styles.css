@@ -3472,3 +3472,369 @@ button.quant-table-row:hover {
 .app-shell [data-panel="portfolio"] .pill.warn {
   color: #5a4100 !important;
 }
+
+/* Investment cockpit visual direction */
+:root {
+  --cockpit-bg: #020207;
+  --cockpit-panel: rgba(11, 12, 21, 0.78);
+  --cockpit-panel-strong: rgba(17, 18, 31, 0.92);
+  --cockpit-line: rgba(190, 145, 255, 0.18);
+  --cockpit-glow: rgba(141, 60, 255, 0.38);
+  --cockpit-green: #4cff88;
+  --cockpit-cyan: #57d9ff;
+}
+
+body {
+  background:
+    radial-gradient(circle at 76% 4%, rgba(141, 60, 255, 0.34), transparent 28%),
+    radial-gradient(circle at 18% 8%, rgba(87, 217, 255, 0.12), transparent 24%),
+    radial-gradient(circle at 60% 82%, rgba(141, 60, 255, 0.18), transparent 30%),
+    linear-gradient(180deg, #05050a 0%, var(--cockpit-bg) 52%, #010104 100%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, transparent 0 58%, rgba(176, 92, 255, 0.06) 58% 59%, transparent 59%),
+    radial-gradient(circle at 50% 0, rgba(255, 255, 255, 0.09), transparent 12%);
+  opacity: 0.9;
+}
+
+.landing-page {
+  position: relative;
+}
+
+.landing-page::before {
+  content: "";
+  position: absolute;
+  inset: 72px -10vw auto auto;
+  width: min(760px, 62vw);
+  height: min(760px, 62vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(141, 60, 255, 0.28), transparent 68%);
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.landing-nav {
+  position: relative;
+  z-index: 2;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 12px 16px;
+  background: rgba(3, 4, 9, 0.44);
+  backdrop-filter: blur(18px);
+}
+
+.landing-hero {
+  min-height: 720px;
+}
+
+.hero-text h1 {
+  max-width: 720px;
+  text-shadow: 0 0 34px rgba(176, 92, 255, 0.16);
+}
+
+.hero-text h1 span,
+#viewTitle,
+.portfolio-summary h2,
+.quant-command-hero h2 {
+  background: linear-gradient(135deg, #ffffff 0%, #d8c2ff 36%, #9f62ff 70%, #57d9ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+}
+
+.vision-device {
+  min-height: 610px;
+  isolation: isolate;
+}
+
+.vision-device > img {
+  position: absolute;
+  inset: 0 0 auto auto;
+  z-index: 2;
+  width: min(820px, 108%);
+  max-width: none;
+  border-radius: 30px;
+  opacity: 0.96;
+  filter:
+    drop-shadow(0 44px 90px rgba(0, 0, 0, 0.72))
+    drop-shadow(0 0 34px rgba(141, 60, 255, 0.35));
+  transform: perspective(1200px) rotateY(-5deg) rotateX(2deg);
+}
+
+.vision-device .device-window,
+.vision-device .phone-card {
+  opacity: 0;
+}
+
+.store-strip,
+.landing-feature-grid article,
+.auth-card,
+.app-shell.visible .topbar,
+.app-shell.visible .sidebar,
+.app-shell.visible .sidebar-panel,
+.app-shell.visible .market-hero,
+.app-shell.visible .metric-card,
+.app-shell.visible .detail-panel,
+.app-shell.visible .sets-list,
+.app-shell.visible .insight-strip article,
+.app-shell.visible .portfolio-summary,
+.app-shell.visible .analysis-card,
+.app-shell.visible .data-table,
+.app-shell.visible .signal-card,
+.app-shell.visible .research-band,
+.app-shell.visible .watch-card,
+.app-shell.visible .action-form,
+.quant-metric,
+.quant-card,
+.quant-detail-card,
+.quant-briefing article,
+.quant-backtest-grid article,
+.quant-command-hero,
+.quant-command-card,
+.quant-pro-card,
+.quant-chart-card,
+.quant-vault-card,
+.quant-strategy-hero,
+.quant-model-hero,
+.quant-model-card,
+.quant-table,
+.quant-opportunities,
+.quant-alert-card {
+  border-color: var(--cockpit-line) !important;
+  background:
+    radial-gradient(circle at 92% 0, rgba(176, 92, 255, 0.18), transparent 28%),
+    linear-gradient(135deg, rgba(141, 60, 255, 0.105), transparent 46%),
+    var(--cockpit-panel) !important;
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+  backdrop-filter: blur(22px) saturate(1.18);
+}
+
+.app-shell.visible {
+  background:
+    radial-gradient(circle at 75% 0, rgba(141, 60, 255, 0.3), transparent 30%),
+    radial-gradient(circle at 18% 10%, rgba(87, 217, 255, 0.11), transparent 26%),
+    linear-gradient(90deg, rgba(176, 92, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(rgba(176, 92, 255, 0.05) 1px, transparent 1px),
+    var(--cockpit-bg);
+  background-size: auto, auto, 70px 70px, 70px 70px, auto;
+}
+
+.app-shell.visible .topbar {
+  position: sticky;
+  top: 12px;
+  z-index: 8;
+}
+
+.app-shell.visible .topbar h1 {
+  font-size: clamp(2.35rem, 4vw, 4.25rem);
+}
+
+.app-shell.visible .market-hero {
+  position: relative;
+  min-height: 440px;
+  overflow: hidden;
+}
+
+.app-shell.visible .market-hero::after {
+  content: "";
+  position: absolute;
+  inset: 18px 18px 18px 44%;
+  border-radius: 22px;
+  background:
+    linear-gradient(90deg, rgba(12, 13, 21, 0.24), rgba(12, 13, 21, 0.08)),
+    url("assets/lego-tracker-vision.png") center / cover no-repeat;
+  opacity: 0.48;
+  filter: saturate(1.12) contrast(1.04);
+  mask-image: linear-gradient(90deg, transparent 0%, black 24%);
+  pointer-events: none;
+}
+
+.app-shell.visible .market-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.app-shell.visible .hero-copy {
+  padding: 42px;
+}
+
+.app-shell.visible .hero-copy h2,
+.portfolio-summary h2 {
+  text-shadow: 0 0 28px rgba(176, 92, 255, 0.22);
+}
+
+.app-shell.visible .hero-copy h2 {
+  font-size: clamp(3.3rem, 8vw, 6.6rem);
+}
+
+.app-shell.visible .hero-visual {
+  opacity: 0.88;
+  mix-blend-mode: screen;
+}
+
+.app-shell.visible .metric-card {
+  min-height: 174px;
+  padding: 24px;
+}
+
+.app-shell.visible .metric-card strong,
+.quant-metric strong {
+  color: #ffffff;
+  text-shadow: 0 0 22px rgba(176, 92, 255, 0.18);
+}
+
+.app-shell.visible .metric-card small,
+.positive,
+.app-shell.visible .positive {
+  color: var(--cockpit-green) !important;
+}
+
+.primary-action {
+  background:
+    linear-gradient(135deg, #a950ff 0%, #742cff 52%, #4b18d8 100%) !important;
+  box-shadow:
+    0 16px 34px rgba(116, 44, 255, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.primary-action:hover,
+.ghost-action:hover,
+.outline-login:hover,
+.quant-tab:hover {
+  transform: translateY(-1px);
+}
+
+.primary-action,
+.ghost-action,
+.outline-login,
+.quant-tab,
+.nav-item,
+.segment,
+.icon-action {
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.app-shell.visible .nav-item.active {
+  border: 1px solid rgba(176, 92, 255, 0.24);
+  background:
+    linear-gradient(135deg, rgba(141, 60, 255, 0.34), rgba(87, 217, 255, 0.08));
+  box-shadow: 0 12px 30px rgba(141, 60, 255, 0.16);
+}
+
+.portfolio-grid {
+  grid-template-columns: minmax(380px, 1.1fr) minmax(0, 1fr);
+}
+
+.portfolio-summary {
+  position: relative;
+  min-height: 400px;
+  overflow: hidden;
+}
+
+.portfolio-summary::after {
+  content: "";
+  position: absolute;
+  right: -90px;
+  top: 30px;
+  width: 330px;
+  height: 330px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.18), transparent 10%),
+    radial-gradient(circle at 60% 32%, rgba(255, 255, 255, 0.12), transparent 11%),
+    linear-gradient(135deg, rgba(176, 92, 255, 0.42), rgba(87, 217, 255, 0.08));
+  filter: blur(1px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.allocation-chart,
+.growth-chart,
+.quant-line-chart,
+.spark-large {
+  border: 1px solid rgba(176, 92, 255, 0.12);
+  box-shadow: inset 0 0 28px rgba(141, 60, 255, 0.08);
+}
+
+.set-row,
+.table-row,
+.quant-table-row {
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.set-row:hover,
+button.quant-table-row:hover {
+  transform: translateX(2px);
+}
+
+.set-thumb.has-image,
+.detail-art.has-image,
+.portfolio-thumb.has-image {
+  border: 1px solid rgba(176, 92, 255, 0.12);
+  background:
+    radial-gradient(circle at 50% 20%, rgba(176, 92, 255, 0.2), transparent 45%),
+    rgba(255, 255, 255, 0.04) !important;
+}
+
+.quant-score-orb,
+.command-orb,
+.model-orb {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.11),
+    0 0 42px rgba(141, 60, 255, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.quant-tab.active {
+  box-shadow: 0 12px 28px rgba(141, 60, 255, 0.18);
+}
+
+.quant-pill.good,
+.pill {
+  box-shadow: 0 0 18px rgba(76, 255, 136, 0.18);
+}
+
+@media (max-width: 1120px) {
+  .app-shell.visible .market-hero::after {
+    inset: auto 16px 16px 16px;
+    height: 210px;
+    mask-image: linear-gradient(180deg, transparent 0%, black 22%);
+  }
+
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .landing-nav {
+    border-radius: 14px;
+  }
+
+  .vision-device {
+    min-height: 320px;
+  }
+
+  .vision-device > img {
+    width: 118%;
+    right: -12%;
+    transform: none;
+  }
+
+  .app-shell.visible .market-hero {
+    min-height: 620px;
+  }
+
+  .app-shell.visible .hero-copy {
+    padding: 24px;
+  }
+}
